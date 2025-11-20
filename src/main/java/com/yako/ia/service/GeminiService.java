@@ -14,6 +14,10 @@ public class GeminiService {
 
     public String generateContent(String title, String slug) {
         String promptText = "Escribe un post de blog en español sobre: '" + title + "'. El slug es '" + slug + "'. El texto debe ser informativo y bien redactado.";
+        return generateContent(title, slug, promptText);
+    }
+
+    public String generateContent(String title, String slug, String promptText) {
         Prompt prompt = new Prompt(promptText);
         try {
             var result = chatModel.call(prompt).getResult();
@@ -27,6 +31,31 @@ public class GeminiService {
                     }
                 } catch (Exception e) {
                     // Si no existe getContent(), usar toString()
+                    return output.toString();
+                }
+            }
+            return "Gemini no devolvió contenido.";
+        } catch (Exception e) {
+            System.err.println("Error al generar contenido con Gemini: " + e.getMessage());
+            return "Gemini generation failed";
+        }
+    }
+
+    public String generateContentWithContext(String title, String slug, String[] palabras) {
+        String palabrasStr = String.join(", ", palabras);
+        String promptText = "Escribe un post de blog en español sobre: '" + title + "'. El slug es '" + slug + "'. El texto debe ser informativo y bien redactado. Incluye contexto con las siguientes palabras: [" + palabrasStr + "]";
+        Prompt prompt = new Prompt(promptText);
+        try {
+            var result = chatModel.call(prompt).getResult();
+            var output = result.getOutput();
+            if (output != null) {
+                try {
+                    var method = output.getClass().getMethod("getContent");
+                    Object content = method.invoke(output);
+                    if (content != null) {
+                        return content.toString();
+                    }
+                } catch (Exception e) {
                     return output.toString();
                 }
             }
